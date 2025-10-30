@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -8,45 +8,38 @@ import {
   faUser,
   faSignOutAlt,
   faSignInAlt,
-  faHome,
-  faStar,
   faGuitar,
+  faGear,
+  faTableList,
+  faChevronDown,
 } from "@fortawesome/free-solid-svg-icons";
+
 import Button from "../common/Button";
 import { motion, AnimatePresence } from "framer-motion";
 
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthenticated, userEmail, logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
 
-  // Scroll listeners
+  const isDashboard = location.pathname.startsWith("/dashboard");
+
+  // Scroll listener
   useEffect(() => {
     const handleScroll = () => {
       const currentY = window.scrollY;
       setScrolled(currentY > 80);
-      setHidden(currentY > lastScrollY && currentY > 200); // hide when scrolling down past hero
+      setHidden(currentY > lastScrollY && currentY > 200);
       setLastScrollY(currentY);
     };
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, [lastScrollY]);
-
-  const scrollToSection = (id: string) => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth" });
-    } else {
-      navigate("/");
-      setTimeout(() => {
-        document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
-      }, 300);
-    }
-    setIsOpen(false);
-  };
 
   const handleLogout = () => {
     logout();
@@ -62,13 +55,19 @@ const Navbar: React.FC = () => {
         y: hidden ? -100 : 0,
       }}
       transition={{ duration: 0.5, ease: "easeInOut" }}
-      className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 ${
-        scrolled
+      className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 ${isDashboard
+        ? "bg-[#090014]/95 backdrop-blur-xl border-b border-blue-500/20 shadow-md shadow-blue-600/10"
+        : scrolled
           ? "bg-black/60 backdrop-blur-lg border-b border-blue-500/20 shadow-md shadow-blue-600/10"
           : "bg-transparent border-b border-transparent"
-      }`}
+        }`}
     >
-      <div className="max-w-7xl mx-auto flex justify-between items-center px-6 py-4 text-gray-300">
+      {/* Sidebar 연결 블록 (대시보드 전용) */}
+      {isDashboard && (
+        <div className="absolute left-0 top-0 h-full w-64 bg-white/5 backdrop-blur-lg border-r border-white/10" />
+      )}
+
+      <div className="max-w-7xl mx-auto flex justify-between items-center px-6 py-4 text-gray-300 relative z-10">
         {/* Logo */}
         <div
           onClick={() => navigate("/")}
@@ -78,30 +77,8 @@ const Navbar: React.FC = () => {
           <span>AI Guitar TAB</span>
         </div>
 
-        {/* Desktop Menu */}
+        {/* ✅ Desktop Menu */}
         <div className="hidden md:flex items-center space-x-8">
-          <button
-            onClick={() => scrollToSection("hero")}
-            className="hover:text-blue-400 transition"
-          >
-            <FontAwesomeIcon icon={faHome} className="mr-2" />
-            Home
-          </button>
-          <button
-            onClick={() => scrollToSection("features")}
-            className="hover:text-blue-400 transition"
-          >
-            <FontAwesomeIcon icon={faStar} className="mr-2" />
-            Features
-          </button>
-          <button
-            onClick={() => scrollToSection("how-it-works")}
-            className="hover:text-blue-400 transition"
-          >
-            <FontAwesomeIcon icon={faGuitar} className="mr-2" />
-            How It Works
-          </button>
-
           {!isAuthenticated ? (
             <>
               <Button
@@ -123,30 +100,57 @@ const Navbar: React.FC = () => {
             </>
           ) : (
             <>
-              <span className="text-gray-400 text-sm flex items-center">
-                <FontAwesomeIcon icon={faUser} className="mr-2 text-blue-400" />
-                {userEmail}
-              </span>
-              <Button
+              {/* ✅ Dashboard 이동 버튼 (프로필 왼쪽) */}
+              <button
                 onClick={() => navigate("/dashboard")}
-                variant="outline"
-                className="px-4 py-2 flex items-center"
+                className="text-sm text-gray-300 hover:text-blue-400 transition flex items-center space-x-2"
               >
-                Dashboard
-              </Button>
-              <Button
-                onClick={handleLogout}
-                variant="ghost"
-                className="px-4 py-2 flex items-center"
-              >
-                <FontAwesomeIcon icon={faSignOutAlt} className="mr-2" />
-                Logout
-              </Button>
+                <FontAwesomeIcon icon={faTableList} className="text-blue-400" />
+                <span>Dashboard</span>
+              </button>
+
+              {/* ✅ 프로필 드롭다운 */}
+              <div className="relative">
+                <button
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                  className="flex items-center space-x-2 text-sm hover:text-blue-400 transition"
+                >
+                  <FontAwesomeIcon icon={faUser} className="text-blue-400" />
+                  <span>{userEmail}</span>
+                  <motion.span
+                    animate={{ rotate: dropdownOpen ? 180 : 0 }}
+                    transition={{ duration: 0.25, ease: "easeInOut" }}
+                    className="ml-1 text-xs text-gray-400"
+                  >
+                    <FontAwesomeIcon icon={faChevronDown} />
+                  </motion.span>
+                </button>
+
+                {dropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white/10 backdrop-blur-lg border border-white/10 rounded-lg shadow-lg z-50 text-gray-200">
+                    <button
+                      onClick={() => {
+                        navigate("/settings");
+                        setDropdownOpen(false);
+                      }}
+                      className="block w-full text-left px-4 py-2 hover:bg-white/20 transition"
+                    >
+                      <FontAwesomeIcon icon={faGear} className="mr-2" /> Settings
+                    </button>
+                    <button
+                      onClick={handleLogout}
+                      className="block w-full text-left px-4 py-2 text-red-400 hover:bg-red-500/20 transition"
+                    >
+                      <FontAwesomeIcon icon={faSignOutAlt} className="mr-2" /> Logout
+                    </button>
+                  </div>
+                )}
+              </div>
             </>
           )}
         </div>
 
-        {/* Mobile Toggle */}
+        {/* ✅ 모바일 메뉴 토글 */}
         <button
           onClick={() => setIsOpen(!isOpen)}
           className="md:hidden text-gray-300 hover:text-blue-400 transition"
@@ -155,7 +159,7 @@ const Navbar: React.FC = () => {
         </button>
       </div>
 
-      {/* Mobile Menu */}
+      {/* ✅ Mobile Menu */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -163,41 +167,58 @@ const Navbar: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.3 }}
-            className="md:hidden flex flex-col items-center bg-black/40 backdrop-blur-md border-t border-white/0 py-6 space-y-5 text-gray-200"
+            className="md:hidden flex flex-col items-center bg-black/20 backdrop-blur-md border-t border-white/0 py-6 space-y-5 text-gray-200"
           >
-            <button onClick={() => scrollToSection("hero")} className="hover:text-blue-400">
-              <FontAwesomeIcon icon={faHome} className="mr-2" /> Home
-            </button>
-            <button onClick={() => scrollToSection("features")} className="hover:text-blue-400">
-              <FontAwesomeIcon icon={faStar} className="mr-2" /> Features
-            </button>
-            <button onClick={() => scrollToSection("how-it-works")} className="hover:text-blue-400">
-              <FontAwesomeIcon icon={faGuitar} className="mr-2" /> How It Works
-            </button>
-
             {!isAuthenticated ? (
               <>
-                <Button onClick={() => navigate("/login")} variant="ghost" className="px-2 py-1">
+                <Button
+                  onClick={() => navigate("/login")}
+                  variant="ghost"
+                  className="px-2 py-1"
+                >
                   <FontAwesomeIcon icon={faSignInAlt} className="mr-2" />
                   Login
                 </Button>
-                <Button onClick={() => navigate("/signup")} variant="primary" className="flex items-center px-2 py-1">
+                <Button
+                  onClick={() => navigate("/signup")}
+                  variant="primary"
+                  className="flex items-center px-2 py-1"
+                >
                   <FontAwesomeIcon icon={faUser} className="mr-2" />
                   Sign Up
                 </Button>
               </>
             ) : (
               <>
-                <span className="text-gray-200 text-sm flex items-center">
-                  <FontAwesomeIcon icon={faUser} className="mr-2 text-blue-400" />
-                  {userEmail}
-                </span>
-                <Button onClick={() => navigate("/dashboard")} variant="outline" className="px-4 py-2">
-                  Dashboard
+                {/* 모바일에서도 Dashboard 표시 */}
+                <Button
+                  onClick={() => {
+                    navigate("/dashboard");
+                    setIsOpen(false);
+                  }}
+                  variant="outline"
+                  className="px-4 py-2 w-40 flex justify-center items-center"
+                >
+                  <FontAwesomeIcon icon={faTableList} className="mr-2" /> Dashboard
                 </Button>
-                <Button onClick={handleLogout} variant="ghost" className="px-4 py-2">
-                  <FontAwesomeIcon icon={faSignOutAlt} className="mr-2" />
-                  Logout
+
+                <Button
+                  onClick={() => {
+                    navigate("/settings");
+                    setIsOpen(false);
+                  }}
+                  variant="primary"
+                  className="px-4 py-2 w-40 flex justify-center items-center bg-transparent"
+                >
+                  <FontAwesomeIcon icon={faGear} className="mr-2" /> Settings
+                </Button>
+
+                <Button
+                  onClick={handleLogout}
+                  variant="ghost"
+                  className="px-4 py-2 w-40 flex justify-center items-center"
+                >
+                  <FontAwesomeIcon icon={faSignOutAlt} className="mr-2" /> Logout
                 </Button>
               </>
             )}

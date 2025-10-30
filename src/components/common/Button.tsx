@@ -37,9 +37,7 @@ const Button: React.FC<ButtonProps> = ({
       disabled={disabled}
       whileHover={!disabled ? { scale: 1.05 } : {}}
       whileTap={!disabled ? { scale: 0.97 } : {}}
-      className={`${baseStyles} ${variants[variant]} ${
-        disabled ? "opacity-50 cursor-not-allowed" : ""
-      } ${className}`}
+      className={`${baseStyles} ${variants[variant]} ${disabled ? "opacity-50 cursor-not-allowed" : ""} ${className}`}
     >
       {children}
     </motion.button>

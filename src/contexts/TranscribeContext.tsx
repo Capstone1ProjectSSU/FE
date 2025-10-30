@@ -1,105 +1,111 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState } from "react";
 import type { ReactNode } from "react";
-import toast from "react-hot-toast";
 
-type TranscribeStatus = "idle" | "processing" | "done" | "error";
+type TranscribeStatus = "processing" | "done" | "error";
 type TranscribeStep = "Analyzing" | "Transcribing" | "Generating TAB";
 
-interface TranscribeContextType {
+interface TranscribeItem {
+  id: string;
+  fileName: string;
+  file?: File; // 👈 Retry 시 재사용을 위한 원본 파일
+  instrument: "electric" | "bass";
+  difficulty: "Beginner" | "Intermediate" | "Advanced";
   status: TranscribeStatus;
   step: TranscribeStep;
   progress: number;
-  instrument: "electric" | "bass";
-  difficulty: "Beginner" | "Intermediate" | "Advanced";
-  fileName?: string;
+  date: string;
+}
+
+interface TranscribeContextType {
+  transcriptions: TranscribeItem[];
   startTranscription: (
     file: File,
     instrument: "electric" | "bass",
-    difficulty: "Beginner" | "Intermediate" | "Advanced"
+    difficulty: "Beginner" | "Intermediate" | "Advanced",
+    retryId?: string // 👈 Retry용 id
   ) => void;
-  reset: () => void;
+  removeTranscription: (id: string) => void;
+  resetAll: () => void;
 }
 
 const TranscribeContext = createContext<TranscribeContextType | undefined>(undefined);
 
 export function TranscribeProvider({ children }: { children: ReactNode }) {
-  const [status, setStatus] = useState<TranscribeStatus>("idle");
-  const [step, setStep] = useState<TranscribeStep>("Analyzing");
-  const [progress, setProgress] = useState(0);
-  const [instrument, setInstrument] = useState<"electric" | "bass">("electric");
-  const [difficulty, setDifficulty] = useState<"Beginner" | "Intermediate" | "Advanced">(
-    "Intermediate"
-  );
-  const [fileName, setFileName] = useState<string | undefined>();
-
-  const reset = () => {
-    setStatus("idle");
-    setProgress(0);
-    setStep("Analyzing");
-    setFileName(undefined);
-  };
+  const [transcriptions, setTranscriptions] = useState<TranscribeItem[]>([]);
 
   const startTranscription = (
     file: File,
     instrument: "electric" | "bass",
-    difficulty: "Beginner" | "Intermediate" | "Advanced"
+    difficulty: "Beginner" | "Intermediate" | "Advanced",
+    retryId?: string
   ) => {
-    setInstrument(instrument);
-    setDifficulty(difficulty);
-    setFileName(file.name);
-    setStatus("processing");
-    setProgress(0);
-    setStep("Analyzing");
+    // 🔁 Retry: 기존 아이템을 그대로 재활용
+    let id = retryId ?? crypto.randomUUID();
+    const newItem: TranscribeItem = {
+      id,
+      file,
+      fileName: file.name,
+      instrument,
+      difficulty,
+      status: "processing",
+      step: "Analyzing",
+      progress: 0,
+      date: new Date().toISOString(),
+    };
+
+    // Retry일 경우 기존 항목 덮어쓰기
+    setTranscriptions((prev) => {
+      const filtered = prev.filter((t) => t.id !== id);
+      return [newItem, ...filtered];
+    });
 
     const stages: TranscribeStep[] = ["Analyzing", "Transcribing", "Generating TAB"];
     let stageIndex = 0;
 
     const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setStatus("done");
-          return 100;
-        }
+      setTranscriptions((prev) =>
+        prev.map((item) => {
+          if (item.id !== id) return item;
 
-        // ❌ 에러 시뮬레이션 (3% 확률)
-        if (Math.random() < 0.03) {
-          clearInterval(interval);
-          setStatus("error");
-          return prev;
-        }
+          const nextProgress = item.progress + 10;
 
-        const next = prev + 10;
-        if (next % 35 === 0 && stageIndex < stages.length - 1) {
-          stageIndex++;
-          setStep(stages[stageIndex]);
-        }
-        return next;
-      });
+          if (Math.random() < 0.03) {
+            clearInterval(interval);
+            return { ...item, status: "error" };
+          }
+
+          if (nextProgress >= 100) {
+            clearInterval(interval);
+            return { ...item, progress: 100, status: "done" };
+          }
+
+          let nextStep = item.step;
+          if (nextProgress % 35 === 0 && stageIndex < stages.length - 1) {
+            stageIndex++;
+            nextStep = stages[stageIndex];
+          }
+
+          return { ...item, progress: nextProgress, step: nextStep };
+        })
+      );
     }, 400);
   };
 
-  // ✅ 전역 Toast 감시 (상태 변경 감지)
-  useEffect(() => {
-    if (status === "done") {
-      toast.success("✅ Transcription Complete!", { id: "global-transcribe-complete" });
-    }
-    if (status === "error") {
-      toast.error("❌ 변환 중 오류가 발생했습니다.", { id: "global-transcribe-error" });
-    }
-  }, [status]);
+  const removeTranscription = (id: string) => {
+    setTranscriptions((prev) => prev.filter((t) => t.id !== id));
+  };
+
+  const resetAll = () => {
+    setTranscriptions([]);
+  };
 
   return (
     <TranscribeContext.Provider
       value={{
-        status,
-        step,
-        progress,
-        instrument,
-        difficulty,
-        fileName,
+        transcriptions,
         startTranscription,
-        reset,
+        removeTranscription,
+        resetAll,
       }}
     >
       {children}
