@@ -73,9 +73,16 @@ export default function DragDropZone({ onFileSelect }: DragDropZoneProps) {
           또는 아래 버튼으로 파일을 선택하세요.
         </p>
 
-        {/* Upload Button */}
+        {/* ✅ Upload Button (Button.tsx와 동일 스타일) */}
         <label className="relative inline-block cursor-pointer mt-3">
-          <span className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full text-sm font-medium shadow-md hover:shadow-blue-500/40 hover:scale-105 transition-all duration-300">
+          <span
+            className={`flex items-center justify-center gap-2 px-5 py-2 rounded-lg font-medium text-sm 
+              bg-gradient-to-r from-blue-600 to-purple-600 text-white 
+              hover:from-blue-500 hover:to-purple-500 
+              shadow-md shadow-blue-500/20 hover:shadow-blue-500/40 
+              transition-all duration-300`}
+          >
+            <FontAwesomeIcon icon={faCloudArrowUp} className="text-white" />
             파일 선택
           </span>
           <input

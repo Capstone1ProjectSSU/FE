@@ -20,11 +20,11 @@ export default function SettingsPage() {
     };
 
     const handleSave = () => {
-        toast.success("✅ Settings saved! (mock)");
+        toast.success("[+] Settings saved! (mock)");
     };
 
     const handleDeleteAccount = () => {
-        toast.success("🚫 Account deleted (mock)");
+        toast.success("[-] Account deleted (mock)");
         setShowDeleteModal(false);
         // TODO: 실제 회원탈퇴 API 연동 및 로그아웃 처리
     };
@@ -98,7 +98,6 @@ export default function SettingsPage() {
                 </div>
             </motion.div>
 
-            {/* ⚠️ 회원 탈퇴 모달 */}
             <AnimatePresence>
                 {showDeleteModal && (
                     <ModalPortal>

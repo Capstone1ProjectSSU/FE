@@ -1,7 +1,13 @@
-export interface Tab {
+import type { TabComment } from "./community";
+
+export interface TabItem {
   id: number;
   title: string;
-  difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
+  artist: string;
   instrument: string;
-  date: string; // ISO 또는 YYYY-MM-DD
+  difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
+  date: string;
+  shared?: boolean;
+  rating?: number;
+  comments?: TabComment[];
 }

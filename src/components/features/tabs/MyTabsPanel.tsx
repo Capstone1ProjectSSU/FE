@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import TabList from "../tabs/TabList";
+import TabList from "./TabList";
 import { motion } from "framer-motion";
 
 interface MyTabsPanelProps {
-  filters:any;
+  filters: any;
   onSelectTab?: (tab: any) => void;
 }
 
@@ -54,13 +54,13 @@ export default function MyTabsPanel({ filters, onSelectTab }: MyTabsPanelProps) 
         </p>
       </motion.div>
       <TabList
-      tabs={filteredTabs}
-      onSelectTab={onSelectTab}
-      onDelete={(id) => {
-        setAllTabs((prev) => prev.filter((t) => t.id !== id));
-        setFilteredTabs((prev) => prev.filter((t) => t.id !== id));
-      }}
-    />
+        tabs={filteredTabs}
+        onSelectTab={onSelectTab}
+        onDelete={(id) => {
+          setAllTabs((prev) => prev.filter((t) => t.id !== id));
+          setFilteredTabs((prev) => prev.filter((t) => t.id !== id));
+        }}
+      />
     </>
   );
 }

@@ -2,12 +2,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faXmark } from "@fortawesome/free-solid-svg-icons";
 import { useTranscribe } from "../../../contexts/TranscribeContext";
-import ProgressBar from "../upload/ProgressBar";
+import ProgressBar from "../../common/ProgressBar";
 import Button from "../../common/Button";
 import { useState } from "react";
 import ModalPortal from "../../common/ModalPortal";
 import Input from "../../common/Input";
-import { useTab } from "../../../contexts/TabContext";
+import { useTabs } from "../../../contexts/TabContext";
 import toast from "react-hot-toast";
 
 interface TranscribeStatusListProps {
@@ -16,7 +16,7 @@ interface TranscribeStatusListProps {
 
 export default function TranscribeStatusList({ onPreview }: TranscribeStatusListProps) {
     const { transcriptions, removeTranscription, resetAll, startTranscription } = useTranscribe();
-    const { addTab } = useTab();
+    const { addTab } = useTabs();
 
     // 💾 Save modal 상태
     const [showSaveModal, setShowSaveModal] = useState(false);
@@ -52,7 +52,8 @@ export default function TranscribeStatusList({ onPreview }: TranscribeStatusList
         if (!item) return;
 
         addTab({
-            title: `${songTitle} - ${artistName}`,
+            title: songTitle,
+            artist: artistName,
             instrument: item.instrument === "electric" ? "Electric Guitar" : "Bass Guitar",
             difficulty: item.difficulty,
         });

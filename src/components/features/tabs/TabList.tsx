@@ -1,22 +1,19 @@
 import { useState, useEffect, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faTrash,
-  faFileExport,
-  faFileAudio,
-  faFileCode,
-  faFilePdf,
-  faPenToSquare,
+  faEllipsis, // ✅ 추가
 } from "@fortawesome/free-solid-svg-icons";
 import { motion, AnimatePresence } from "framer-motion";
 import Button from "../../common/Button";
 import ModalPortal from "../../common/ModalPortal";
 import { getSavedTabs } from "../../../services/TabService";
 import Input from "../../common/Input";
+import { useCommunity } from "../../../contexts/CommunityContext";
 
 interface TabData {
   id: number;
   title: string;
+  artist?: string;
   difficulty: string;
   instrument: string;
   date: string;
@@ -34,6 +31,7 @@ export default function TabList({ tabs: externalTabs, onDelete, onSelectTab }: T
   const [editTab, setEditTab] = useState<TabData | null>(null);
   const [openDropdown, setOpenDropdown] = useState<number | null>(null);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
+  const { sharedTabs } = useCommunity();
 
   /** ✅ 로컬 또는 props 동기화 */
   useEffect(() => {
@@ -133,100 +131,105 @@ export default function TabList({ tabs: externalTabs, onDelete, onSelectTab }: T
     <>
       {/* TAB 카드 목록 */}
       <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-        {tabs.map((tab, idx) => (
-          <motion.div
-            key={tab.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: idx * 0.1 }}
-            className="relative bg-white/10 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-md hover:border-blue-500/50 transition-all flex flex-col justify-between"
-          >
-            {/* 컨트롤 영역 */}
-            <div className="absolute top-3 right-3 flex items-center space-x-3">
-              {/* ✏️ Edit 버튼 */}
-              <button
-                onClick={() => setEditTab(tab)}
-                title="Edit"
-                className="text-yellow-400 hover:text-yellow-300 transition"
-              >
-                <FontAwesomeIcon icon={faPenToSquare} />
-              </button>
+        {tabs.map((tab, idx) => {
+          const isShared = sharedTabs.some((shared) => shared.id === tab.id);
 
-              {/* Export 버튼 */}
-              <div className="relative" ref={dropdownRef}>
+          return (
+            <motion.div
+              key={tab.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: idx * 0.1 }}
+              className="relative bg-white/10 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-md hover:border-blue-500/50 transition-all flex flex-col justify-between"
+            >
+              {/* 컨트롤 영역 */}
+              <div className="absolute top-3 right-3" ref={dropdownRef}>
+                {/* ⋮ 버튼 */}
                 <button
-                  title="Export Options"
-                  onClick={() =>
-                    setOpenDropdown((prev) => (prev === tab.id ? null : tab.id))
-                  }
-                  className={`text-blue-400 hover:text-blue-300 transition ${openDropdown === tab.id ? "text-blue-300" : ""
-                    }`}
+                  onClick={() => setOpenDropdown(openDropdown === tab.id ? null : tab.id)}
+                  className="text-gray-400 hover:text-white transition"
                 >
-                  <FontAwesomeIcon icon={faFileExport} />
+                  <FontAwesomeIcon
+                    icon={faEllipsis}
+                    className="w-4 h-4 text-gray-400 hover:text-white transition rotate-90"
+                  />
                 </button>
 
+                {/* 드롭다운 메뉴 */}
                 <AnimatePresence>
                   {openDropdown === tab.id && (
                     <motion.div
-                      initial={{ opacity: 0, y: -10 }}
+                      initial={{ opacity: 0, y: -5 }}
                       animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      transition={{ duration: 0.2 }}
-                      className="absolute top-7 right-0 bg-white/30 backdrop-blur-lg border border-white/10 rounded-lg p-2 w-32 z-50 shadow-lg"
+                      exit={{ opacity: 0, y: -5 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute right-0 mt-2 bg-white/20 backdrop-blur-md border border-white/10 rounded-lg shadow-lg text-sm text-gray-200 z-50 overflow-hidden w-32"
                     >
-                      {[
-                        { icon: faFileAudio, color: "text-blue-400", label: ".mp3", type: "mp3" },
-                        { icon: faFileCode, color: "text-green-400", label: ".mxl", type: "mxl" },
-                        { icon: faFilePdf, color: "text-red-400", label: ".pdf", type: "pdf" },
-                      ].map((opt) => (
-                        <button
-                          key={opt.label}
-                          onClick={() => handleDownload(opt.type as any, tab)}
-                          className="flex items-center gap-2 w-full text-left px-2 py-1 rounded-md text-sm text-gray-200 hover:bg-white/20 transition"
-                        >
-                          <FontAwesomeIcon icon={opt.icon} className={opt.color} />
-                          {opt.label}
-                        </button>
-                      ))}
+                      <button
+                        onClick={() => {
+                          setEditTab(tab);
+                          setOpenDropdown(null);
+                        }}
+                        className="w-full text-left px-4 py-2 hover:bg-white/10 transition"
+                      >
+                        ✏️ Edit
+                      </button>
+                      <button
+                        onClick={() => {
+                          handleDownload("pdf", tab);
+                          setOpenDropdown(null);
+                        }}
+                        className="w-full text-left px-4 py-2 hover:bg-white/10 transition"
+                      >
+                        📄 Download
+                      </button>
+                      <button
+                        onClick={() => {
+                          setConfirmDelete(tab);
+                          setOpenDropdown(null);
+                        }}
+                        className="w-full text-left px-4 py-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 transition"
+                      >
+                        🗑 Delete
+                      </button>
                     </motion.div>
                   )}
                 </AnimatePresence>
               </div>
 
-              {/* Delete 버튼 */}
-              <button
-                onClick={() => setConfirmDelete(tab)}
-                title="Delete"
-                className="text-red-400 hover:text-red-300 transition"
-              >
-                <FontAwesomeIcon icon={faTrash} />
-              </button>
-            </div>
 
-            {/* TAB 정보 */}
-            <div>
-              <h3 className="font-semibold text-lg text-white flex justify-center mt-4">
-                {tab.title}
-              </h3>
-              <p className="text-sm text-gray-400 mt-1">{tab.instrument}</p>
-              <p className="text-xs text-gray-500 mt-2">
-                Difficulty: {tab.difficulty}
-              </p>
-            </div>
+              {/* ✅ 공유됨 표시 배지 */}
+              {isShared && (
+                <div className="absolute top-3 left-3 bg-blue-600/40 border border-blue-400/50 text-xs text-white px-2 py-0.5 rounded-full shadow-md backdrop-blur-sm">
+                  Shared
+                </div>
+              )}
 
-            {/* Footer */}
-            <div className="flex items-center justify-between mt-6 mb-0">
-              <p className="text-xs text-gray-500">{tab.date}</p>
-              <Button
-                onClick={() => onSelectTab?.(tab)} // ✅ 내부 navigate 대신 콜백 실행
-                variant="primary"
-                className="px-4 py-2 text-sm"
-              >
-                Show
-              </Button>
-            </div>
-          </motion.div>
-        ))}
+              {/* TAB 정보 */}
+              <div>
+                <h3 className="font-semibold text-lg text-white flex justify-center mt-4">
+                  {tab.title} - {tab.artist}
+                </h3>
+                <p className="text-sm text-gray-400 mt-1">{tab.instrument}</p>
+                <p className="text-xs text-gray-500 mt-2">
+                  Difficulty: {tab.difficulty}
+                </p>
+              </div>
+
+              {/* Footer */}
+              <div className="flex items-center justify-between mt-6 mb-0">
+                <p className="text-xs text-gray-500">{tab.date}</p>
+                <Button
+                  onClick={() => onSelectTab?.(tab)}
+                  variant="primary"
+                  className="px-4 py-2 text-sm"
+                >
+                  Show
+                </Button>
+              </div>
+            </motion.div>
+          );
+        })}
       </div>
 
       {/* 🗑️ 삭제 모달 */}
@@ -295,7 +298,9 @@ export default function TabList({ tabs: externalTabs, onDelete, onSelectTab }: T
                 <h3 className="text-xl font-semibold mb-4 text-center">
                   악보 정보 수정
                 </h3>
+
                 <div className="space-y-4 text-left">
+                  {/* 🎵 곡 제목 */}
                   <Input
                     label="곡 제목"
                     name="title"
@@ -304,6 +309,18 @@ export default function TabList({ tabs: externalTabs, onDelete, onSelectTab }: T
                       setEditTab({ ...editTab, title: e.target.value })
                     }
                   />
+
+                  {/* 🎤 아티스트명 */}
+                  <Input
+                    label="아티스트명"
+                    name="artist"
+                    value={editTab.artist || ""}
+                    onChange={(e) =>
+                      setEditTab({ ...editTab, artist: e.target.value })
+                    }
+                  />
+
+                  {/* 🎸 악기 선택 */}
                   <div>
                     <label className="text-sm font-medium text-gray-300 mb-2">
                       악기
@@ -319,6 +336,8 @@ export default function TabList({ tabs: externalTabs, onDelete, onSelectTab }: T
                       <option value="Bass Guitar">Bass Guitar</option>
                     </select>
                   </div>
+
+                  {/* 🎚 난이도 */}
                   <div>
                     <label className="text-sm font-medium text-gray-300 mb-2">
                       난이도
@@ -337,6 +356,7 @@ export default function TabList({ tabs: externalTabs, onDelete, onSelectTab }: T
                   </div>
                 </div>
 
+                {/* 하단 버튼 */}
                 <div className="flex justify-between mt-6">
                   <Button
                     onClick={() => setEditTab(null)}
@@ -358,6 +378,7 @@ export default function TabList({ tabs: externalTabs, onDelete, onSelectTab }: T
           </ModalPortal>
         )}
       </AnimatePresence>
+
     </>
   );
 }

@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import DragDropZone from "../upload/DragDropZone";
-import FilePreview from "../upload/FilePreview";
-import ProgressBar from "../upload/ProgressBar";
+import DragDropZone from "./DragDropZone";
+import FilePreview from "./FilePreview";
+import ProgressBar from "../../common/ProgressBar";
 import Button from "../../common/Button";
 import Input from "../../common/Input";
 import ModalPortal from "../../common/ModalPortal";
 import { useTranscribe } from "../../../contexts/TranscribeContext";
-import { useTab } from "../../../contexts/TabContext";
+import { useTabs } from "../../../contexts/TabContext";
 import toast from "react-hot-toast";
 
 export default function TranscribePanel() {
@@ -22,7 +22,7 @@ export default function TranscribePanel() {
   const [artistName, setArtistName] = useState("");
 
   const { transcriptions, startTranscription } = useTranscribe();
-  const { addTab } = useTab();
+  const { addTab } = useTabs();
   const navigate = useNavigate();
 
   const handleTranscribe = () => {
@@ -33,19 +33,22 @@ export default function TranscribePanel() {
   };
 
   const handleSave = () => {
-    if (!songTitle || !artistName)
-      return toast.error("곡 이름과 가수명을 모두 입력해주세요.");
+  if (!songTitle.trim() || !artistName.trim()) {
+    return toast.error("곡 이름과 가수명을 모두 입력해주세요.");
+  }
 
-    addTab({
-      title: `${songTitle} - ${artistName}`,
-      instrument: instrument === "electric" ? "Electric Guitar" : "Bass Guitar",
-      difficulty,
-    });
+  addTab({
+    title: songTitle,
+    artist: artistName, // ✅ 새로 추가됨
+    instrument: instrument === "electric" ? "Electric Guitar" : "Bass Guitar",
+    difficulty,
+  });
 
-    toast.success("🎵 TAB이 My Tabs에 저장되었습니다!");
-    setShowSaveModal(false);
-    navigate("/dashboard");
-  };
+  toast.success("🎵 TAB이 My Tabs에 저장되었습니다!");
+  setShowSaveModal(false);
+  navigate("/dashboard");
+};
+
 
   const activeJob = transcriptions.find((t) => t.status === "processing");
 

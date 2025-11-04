@@ -1,6 +1,7 @@
 export interface SavedTab {
   id: number;
   title: string;
+  artist: string;
   difficulty: string;
   instrument: string;
   date: string;
@@ -20,7 +21,8 @@ export const saveTab = (
 ): SavedTab => {
   const newTab: SavedTab = {
     id: Date.now(),
-    title: `${songTitle} - ${artistName}`,
+    title: songTitle,
+    artist: artistName,
     difficulty: tabData.difficulty || "Intermediate",
     instrument: "Guitar",
     date: new Date().toISOString().split("T")[0],
