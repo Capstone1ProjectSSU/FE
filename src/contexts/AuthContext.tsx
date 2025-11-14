@@ -17,7 +17,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const login = (email: string) => {
     setIsAuthenticated(true);
     setUserEmail(email);
-    // 나중에 JWT 저장 등 추가 가능
   };
 
   const logout = () => {

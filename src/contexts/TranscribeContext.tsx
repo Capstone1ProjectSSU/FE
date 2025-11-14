@@ -1,111 +1,136 @@
 import { createContext, useContext, useState } from "react";
-import type { ReactNode } from "react";
+import toast from "react-hot-toast";
+import {
+  uploadAudio,
+  requestTranscription,
+  fetchTranscriptionStatus,
+} from "../services/TranscriptionService";
+import type { TranscriptionJob } from "../types/transcription";
 
-type TranscribeStatus = "processing" | "done" | "error";
-type TranscribeStep = "Analyzing" | "Transcribing" | "Generating TAB";
-
-interface TranscribeItem {
-  id: string;
-  fileName: string;
-  file?: File; // 👈 Retry 시 재사용을 위한 원본 파일
-  instrument: "electric" | "bass";
-  difficulty: "Beginner" | "Intermediate" | "Advanced";
-  status: TranscribeStatus;
-  step: TranscribeStep;
-  progress: number;
-  date: string;
+interface UploadOptions {
+  instrument: "GUITAR" | "BASS";
+  songTitle: string;
+  artistName: string;
 }
 
 interface TranscribeContextType {
-  transcriptions: TranscribeItem[];
-  startTranscription: (
-    file: File,
-    instrument: "electric" | "bass",
-    difficulty: "Beginner" | "Intermediate" | "Advanced",
-    retryId?: string // 👈 Retry용 id
-  ) => void;
-  removeTranscription: (id: string) => void;
-  resetAll: () => void;
+  jobs: TranscriptionJob[];
+  addJob: (job: TranscriptionJob) => void;
+  updateJob: (data: Partial<TranscriptionJob> & { jobId: string }) => void;
+  clearJobs: () => void;
+  startPolling: (jobId: string) => void;
+  uploadAndRequest: (file: File, options: UploadOptions) => Promise<void>;
 }
 
-const TranscribeContext = createContext<TranscribeContextType | undefined>(undefined);
+const TranscribeContext = createContext<TranscribeContextType | null>(null);
+const pollingRefs: Record<string, any> = {};
+const pollingFailureCount: Record<string, number> = {};
 
-export function TranscribeProvider({ children }: { children: ReactNode }) {
-  const [transcriptions, setTranscriptions] = useState<TranscribeItem[]>([]);
 
-  const startTranscription = (
-    file: File,
-    instrument: "electric" | "bass",
-    difficulty: "Beginner" | "Intermediate" | "Advanced",
-    retryId?: string
-  ) => {
-    // 🔁 Retry: 기존 아이템을 그대로 재활용
-    let id = retryId ?? crypto.randomUUID();
-    const newItem: TranscribeItem = {
-      id,
-      file,
-      fileName: file.name,
-      instrument,
-      difficulty,
-      status: "processing",
-      step: "Analyzing",
-      progress: 0,
-      date: new Date().toISOString(),
-    };
+export function TranscribeProvider({ children }: any) {
+  const [jobs, setJobs] = useState<TranscriptionJob[]>([]);
 
-    // Retry일 경우 기존 항목 덮어쓰기
-    setTranscriptions((prev) => {
-      const filtered = prev.filter((t) => t.id !== id);
-      return [newItem, ...filtered];
-    });
-
-    const stages: TranscribeStep[] = ["Analyzing", "Transcribing", "Generating TAB"];
-    let stageIndex = 0;
-
-    const interval = setInterval(() => {
-      setTranscriptions((prev) =>
-        prev.map((item) => {
-          if (item.id !== id) return item;
-
-          const nextProgress = item.progress + 10;
-
-          if (Math.random() < 0.03) {
-            clearInterval(interval);
-            return { ...item, status: "error" };
-          }
-
-          if (nextProgress >= 100) {
-            clearInterval(interval);
-            return { ...item, progress: 100, status: "done" };
-          }
-
-          let nextStep = item.step;
-          if (nextProgress % 35 === 0 && stageIndex < stages.length - 1) {
-            stageIndex++;
-            nextStep = stages[stageIndex];
-          }
-
-          return { ...item, progress: nextProgress, step: nextStep };
-        })
-      );
-    }, 400);
+  const addJob = (job: TranscriptionJob) => {
+    setJobs((prev) => [...prev, job]);
   };
 
-  const removeTranscription = (id: string) => {
-    setTranscriptions((prev) => prev.filter((t) => t.id !== id));
+  const updateJob = (data: Partial<TranscriptionJob> & { jobId: string }) => {
+    setJobs((prev) =>
+      prev.map((j) => (j.jobId === data.jobId ? { ...j, ...data } : j))
+    );
   };
 
-  const resetAll = () => {
-    setTranscriptions([]);
+  const clearJobs = () => {
+    Object.values(pollingRefs).forEach(clearInterval);
+    setJobs([]);
+  };
+
+  const startPolling = (jobId: string) => {
+    if (pollingRefs[jobId]) return;
+
+    pollingRefs[jobId] = setInterval(async () => {
+      try {
+        const status = await fetchTranscriptionStatus(jobId);
+
+        // ⭐ 성공 시 오류 카운터 초기화
+        pollingFailureCount[jobId] = 0;
+
+        updateJob({
+          jobId,
+          status: status.status,
+          sheetDataUrl: status.sheetDataUrl,
+        });
+
+        if (status.status === "COMPLETED" || status.status === "FAILED") {
+          clearInterval(pollingRefs[jobId]);
+          delete pollingRefs[jobId];
+          delete pollingFailureCount[jobId];
+        }
+      } catch (err) {
+        console.error("Polling failed", err);
+
+        pollingFailureCount[jobId] = (pollingFailureCount[jobId] || 0) + 1;
+
+        if (pollingFailureCount[jobId] >= 5) {
+          clearInterval(pollingRefs[jobId]);
+          delete pollingRefs[jobId];
+          delete pollingFailureCount[jobId];
+
+          updateJob({
+            jobId,
+            status: "FAILED",
+          });
+        }
+      }
+    }, 3000);
+  };
+
+  const uploadAndRequest = async (file: File, options: UploadOptions) => {
+    try {
+      /** 1) Upload */
+      const uploadRes = await uploadAudio({
+        audioFile: file,
+        songTitle: options.songTitle,
+        artistName: options.artistName,
+      });
+
+      const audioId = uploadRes.audioId; // string
+
+      const req = await requestTranscription({
+        audioId,
+        instrument: options.instrument,
+      });
+
+      const jobId = req.jobId;
+
+      addJob({
+        jobId,
+        audioId,
+        instrument: options.instrument,
+        songTitle: options.songTitle,
+        artistName: options.artistName,
+        status: req.status,
+        queuedAt: req.queuedAt,
+        sheetDataUrl: undefined, // ⭐ 초기값 명시
+      });
+
+      startPolling(jobId);
+
+    } catch (err) {
+      console.error(err);
+      toast.error("전사 요청 중 오류 발생");
+    }
   };
 
   return (
     <TranscribeContext.Provider
       value={{
-        transcriptions,
-        startTranscription,
-        removeTranscription,
-        resetAll,
+        jobs,
+        addJob,
+        updateJob,
+        clearJobs,
+        startPolling,
+        uploadAndRequest,
       }}
     >
       {children}
@@ -114,7 +139,7 @@ export function TranscribeProvider({ children }: { children: ReactNode }) {
 }
 
 export function useTranscribe() {
-  const context = useContext(TranscribeContext);
-  if (!context) throw new Error("useTranscribe must be used within a TranscribeProvider");
-  return context;
+  const ctx = useContext(TranscribeContext);
+  if (!ctx) throw new Error("useTranscribe must be used inside TranscribeProvider");
+  return ctx;
 }
