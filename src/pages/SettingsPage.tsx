@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faGear } from "@fortawesome/free-solid-svg-icons";
 import Button from "../components/common/Button";
-import Input from "../components/common/Input";
+// import Input from "../components/common/Input";
 import ModalPortal from "../components/common/ModalPortal";
 import { extractErrorMessage } from "../utils/error";
 import toast from "react-hot-toast";
@@ -14,20 +14,20 @@ import { useAuth } from "../contexts/AuthContext";
 export default function SettingsPage() {
     const navigate = useNavigate();
     const { logoutUser } = useAuth();
-    const [form, setForm] = useState({ username: "", notifications: true });
+    // const [form, setForm] = useState({ username: "", notifications: true });
     const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, type, checked, value } = e.target;
-        setForm({
-            ...form,
-            [name]: type === "checkbox" ? checked : value,
-        });
-    };
+    // const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    //     const { name, type, checked, value } = e.target;
+    //     setForm({
+    //         ...form,
+    //         [name]: type === "checkbox" ? checked : value,
+    //     });
+    // };
 
-    const handleSave = () => {
-        toast.success("[+] Settings saved! (mock)");
-    };
+    // const handleSave = () => {
+    //     toast.success("[+] Settings saved! (mock)");
+    // };
 
     const handleDeleteAccount = async () => {
         try {
