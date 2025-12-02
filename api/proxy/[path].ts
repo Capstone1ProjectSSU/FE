@@ -11,7 +11,7 @@ export default async function handler(req: any, res: any) {
     ? req.query.path.join("/")
     : req.query.path;
 
-  const targetUrl = `${backend}/api/${path}`;
+  const targetUrl = `${backend}/${path}`;
 
   try {
     const response = await fetch(targetUrl, {
