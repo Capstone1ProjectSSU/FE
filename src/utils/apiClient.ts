@@ -1,6 +1,6 @@
 import type { ApiResult, ApiResponse, ProblemDetail, ApiErrorBody } from "../types/api";
 
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
+export const API_BASE_URL = "/api";
 
 /**
  * AUTH / 일반 JSON API용 (래퍼 없음)
