@@ -1,39 +1,65 @@
-import { request } from "./Client";
-import type { SheetBase, SheetDetail, Difficulty, Instrument } from "../types/sheet";
+import { handleWrappedApi } from "../utils/apiClient";
+import type { ApiResult } from "../types/api";
+import type {
+  SheetListData,
+  SheetDetail,
+  SheetUpdatePayload,
+  SheetUpdateResponse,
+} from "../types/sheet";
 
-export interface SheetQuery {
-  keyword?: string;
-  difficulty?: Difficulty;
-  instrument?: Instrument;
-  page?: number;
-  size?: number;
-  sort?: string;
-  [key: string]: string | number | undefined;
+function authHeader(): Record<string, string> | undefined {
+  const token = localStorage.getItem("accessToken");
+  return token ? { Authorization: `Bearer ${token}` } : undefined;
 }
 
-export const getSheets = async () => {
-  const res = await request<any>("/sheets");
-  return res.data.content;
-};
+// GET /api/sheets
+export function getSheetList(
+  params?: Record<string, any>
+): Promise<ApiResult<SheetListData>> {
+  const query =
+    params && Object.keys(params).length > 0
+      ? "?" + new URLSearchParams(params as any).toString()
+      : "";
 
-// 3️⃣ 상세 조회
-export const getSheetDetail = async (musicId: number) => {
-  const res = await request<any>(`/sheets/${musicId}`);
-  return res.data;
-};
+  return handleWrappedApi<SheetListData>(`/api/sheets${query}`, {
+    method: "GET",
+    headers: {
+      ...authHeader(),
+    },
+  });
+}
 
-// 4️⃣ 수정 (PUT)
-export const updateSheet = (
-  musicId: number,
-  body: Partial<Pick<SheetDetail, "title" | "difficulty" | "tempo" | "capo">>
-) =>
-  request<SheetDetail>(`/sheets/${musicId}`, {
+// GET /api/sheets/{sheet_id}
+export function getSheetDetail(id: string): Promise<ApiResult<SheetDetail>> {
+  return handleWrappedApi<SheetDetail>(`/api/sheets/${id}`, {
+    method: "GET",
+    headers: {
+      ...authHeader(),
+    },
+  });
+}
+
+// PUT /api/sheets/{sheet_id}
+export function updateSheet(
+  id: string,
+  payload: SheetUpdatePayload
+): Promise<ApiResult<SheetUpdateResponse>> {
+  return handleWrappedApi<SheetUpdateResponse>(`/api/sheets/${id}`, {
     method: "PUT",
-    body: JSON.stringify(body),
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeader(),
+    },
+    body: JSON.stringify(payload),
   });
+}
 
-// 5️⃣ 삭제
-export const deleteSheet = (musicId: number) =>
-  request<void>(`/sheets/${musicId}`, {
+// DELETE /api/sheets/{sheet_id}
+export function deleteSheet(id: string): Promise<ApiResult<null>> {
+  return handleWrappedApi<null>(`/api/sheets/${id}`, {
     method: "DELETE",
+    headers: {
+      ...authHeader(),
+    },
   });
+}

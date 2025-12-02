@@ -1,86 +1,87 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080/api";
-import type { TranscriptionJob } from "../types/transcription";
+import { handleWrappedApi } from "../utils/apiClient";
+import type { ApiResult } from "../types/api";
+import type {
+  AudioUploadResponse,
+  TranscriptionRequestPayload,
+  TranscriptionRequestResponse,
+  TranscriptionStatusData,
+  DifficultyRequestPayload,
+  DifficultyResponse,
+} from "../types/transcription";
 
-export interface UploadAudioPayload {
-  audioFile: File;
-  songTitle: string;
-  artistName: string;
+function authHeader(): Record<string, string> | undefined {
+  const token = localStorage.getItem("accessToken");
+  return token ? { Authorization: `Bearer ${token}` } : undefined;
 }
 
-export interface UploadAudioData {
-  audioId: string;
-  fileSize: number;
-  filePath: string;
-  uploadedAt: string;
-}
+export function uploadAudio(
+  audioFile: File,
+  songTitle: string,
+  artistName: string
+): Promise<ApiResult<AudioUploadResponse>> {
+  const form = new FormData();
+  form.append("audioFile", audioFile);
+  form.append("songTitle", songTitle);
+  form.append("artistName", artistName);
 
-export interface UploadAudioResponseEnvelope {
-  success: boolean;
-  code: number;
-  message: string;
-  data: UploadAudioData;
-}
-
-export type TranscriptionStatus = "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED";
-
-export interface TranscriptionRequestPayload {
-  audioId: string | number;
-  instrument: string;
-}
-
-export interface TranscriptionRequestEnvelope {
-  success: boolean;
-  code: number;
-  message: string;
-  data: TranscriptionJob;
-}
-
-async function handleJson<T>(res: Response): Promise<T> {
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(text || `Request failed with status ${res.status}`);
-  }
-  return res.json() as Promise<T>;
-}
-
-export async function uploadAudio(payload: UploadAudioPayload): Promise<UploadAudioData> {
-  const formData = new FormData();
-  formData.append("audioFile", payload.audioFile);
-  formData.append("songTitle", payload.songTitle);
-  formData.append("artistName", payload.artistName);
-
-  const res = await fetch(`${API_BASE_URL}/audio/upload`, {
+  return handleWrappedApi<AudioUploadResponse>("/api/audio/upload", {
     method: "POST",
-    body: formData,
+    body: form,
+    headers: {
+      ...authHeader(),
+    },
   });
-
-  const json = await handleJson<UploadAudioResponseEnvelope>(res);
-  return json.data;
 }
 
-export async function requestTranscription(
+export function requestTranscription(
   payload: TranscriptionRequestPayload
-): Promise<TranscriptionJob> {
-  const body = {
-    audioId: typeof payload.audioId === "string" ? Number(payload.audioId) : payload.audioId,
-    instrument: payload.instrument,
-  };
-
-  const res = await fetch(`${API_BASE_URL}/transcription/request`, {
+): Promise<ApiResult<TranscriptionRequestResponse>> {
+  return handleWrappedApi<TranscriptionRequestResponse>("/api/transcription/request", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeader(),
+    },
+    body: JSON.stringify(payload),
   });
-
-  const json = await handleJson<TranscriptionRequestEnvelope>(res);
-  return json.data;
 }
 
-export async function fetchTranscriptionStatus(jobId: string) {
-  const res = await fetch(`${API_BASE_URL}/transcription/request/${jobId}`, {
-    method: "GET",
-  });
+export function getTranscriptionStatus(
+  jobId: string
+): Promise<ApiResult<TranscriptionStatusData>> {
+  return handleWrappedApi<TranscriptionStatusData>(
+    `/api/transcription/status/${jobId}`,
+    {
+      method: "GET",
+      headers: {
+        ...authHeader(),
+      },
+    }
+  );
+}
 
-  const json = await handleJson<TranscriptionRequestEnvelope>(res);
-  return json.data; // { jobId, audioId, status, queuedAt }
+export function requestDifficultyHarder(
+  payload: DifficultyRequestPayload
+): Promise<ApiResult<DifficultyResponse>> {
+  return handleWrappedApi<DifficultyResponse>("/api/difficulty/harder", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeader(),
+    },
+    body: JSON.stringify(payload),
+  });
+}
+
+export function requestDifficultyEasier(
+  payload: DifficultyRequestPayload
+): Promise<ApiResult<DifficultyResponse>> {
+  return handleWrappedApi<DifficultyResponse>("/api/difficulty/easier", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeader(),
+    },
+    body: JSON.stringify(payload),
+  });
 }

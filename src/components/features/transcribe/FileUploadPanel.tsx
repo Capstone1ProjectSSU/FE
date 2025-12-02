@@ -2,14 +2,15 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import DragDropZone from "./DragDropZone";
 import FilePreview from "./FilePreview";
-import { useTranscribe } from "../../../contexts/TranscribeContext";
 import toast from "react-hot-toast";
+import { useTranscriptionFlow } from "../../../hooks/useTranscriptionFlow";
+import { useTranscriptionHistory } from "../../../contexts/TranscriptionHistoryContext";
 
 export default function FileUploadPanel() {
-  const { uploadAndRequest } = useTranscribe();
+  const flow = useTranscriptionFlow();
+  const history = useTranscriptionHistory();
 
   const [file, setFile] = useState<File | null>(null);
-
   const [songTitle, setSongTitle] = useState("");
   const [artistName, setArtistName] = useState("");
   const [instrument, setInstrument] = useState<"GUITAR" | "BASS">("GUITAR");
@@ -25,15 +26,31 @@ export default function FileUploadPanel() {
     songTitle: string;
     artistName: string;
   }) => {
-    if (!file) {
-      toast.error("파일이 없습니다. 다시 업로드하세요.");
-      return;
+    if (!file) return toast.error("파일 없음");
+
+    try {
+      const audioId = await flow.handleUpload(
+        file,
+        options.songTitle,
+        options.artistName
+      );
+
+      const req = await flow.startTranscription(Number(audioId), options.instrument);
+
+      history.updateJob({
+        jobId: req.jobId,
+        songTitle: options.songTitle,
+        artistName: options.artistName,
+      });
+
+      toast.success("🎧 Transcription started!");
+
+      flow.pollStatus(req.jobId);
+
+      clearFile();
+    } catch (err: any) {
+      toast.error(err.message ?? "Transcription failed.");
     }
-
-    await uploadAndRequest(file, options);
-    toast.success("🎧 Transcription started!");
-
-    clearFile();
   };
 
   const clearFile = () => {
@@ -47,24 +64,11 @@ export default function FileUploadPanel() {
     <div className="w-full max-w-xl mx-auto">
       <AnimatePresence mode="wait">
         {!file ? (
-          <motion.div
-            key="drag"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.3 }}
-          >
+          <motion.div>
             <DragDropZone onFileSelect={handleFileSelect} />
           </motion.div>
         ) : (
-          <motion.div
-            key="preview"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.3 }}
-            className="relative"
-          >
+          <motion.div>
             <FilePreview
               file={file}
               songTitle={songTitle}

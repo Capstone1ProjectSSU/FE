@@ -53,7 +53,6 @@ export default function FilePreview({ file, onTranscribe, onClear }: FilePreview
       transition={{ duration: 0.5 }}
       className="relative bg-white/10 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-lg transition-all duration-300"
     >
-      {/* X 버튼 */}
       {onClear && (
         <button
           onClick={onClear}
@@ -63,7 +62,6 @@ export default function FilePreview({ file, onTranscribe, onClear }: FilePreview
         </button>
       )}
 
-      {/* 제목 영역 */}
       <div className="flex items-center gap-4 text-white mb-6">
         <FontAwesomeIcon
           icon={faFileAudio}
@@ -77,43 +75,7 @@ export default function FilePreview({ file, onTranscribe, onClear }: FilePreview
         </div>
       </div>
 
-      {/* 입력 UI */}
-      {/* <div className="space-y-4 mb-6">
-        <div>
-          <label className="text-sm text-gray-300">Song Title</label>
-          <input
-            value={songTitle}
-            onChange={(e) => setSongTitle(e.target.value)}
-            className="w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 mt-1 text-white"
-            placeholder="Enter song title..."
-          />
-        </div>
-
-        <div>
-          <label className="text-sm text-gray-300">Artist Name</label>
-          <input
-            value={artistName}
-            onChange={(e) => setArtistName(e.target.value)}
-            className="w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 mt-1 text-white"
-            placeholder="Enter artist name..."
-          />
-        </div>
-
-        <div>
-          <label className="text-sm text-gray-300">Instrument</label>
-          <select
-            value={instrument}
-            onChange={(e) => setInstrument(e.target.value as "GUITAR" | "BASS")}
-            className="w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 mt-1 text-white"
-          >
-            <option value="GUITAR">Guitar</option>
-            <option value="BASS">Bass</option>
-          </select>
-        </div>
-      </div> */}
       <div className="space-y-5 mb-6">
-
-        {/* Song Title */}
         <div className="flex flex-col gap-1">
           <label className="text-sm font-medium text-gray-200 flex items-center gap-2">
             Song Title
@@ -126,7 +88,6 @@ export default function FilePreview({ file, onTranscribe, onClear }: FilePreview
           />
         </div>
 
-        {/* Artist Name */}
         <div className="flex flex-col gap-1">
           <label className="text-sm font-medium text-gray-200 flex items-center gap-2">
             Artist Name
@@ -139,7 +100,6 @@ export default function FilePreview({ file, onTranscribe, onClear }: FilePreview
           />
         </div>
 
-        {/* Instrument */}
         <div className="flex flex-col gap-2">
           <label className="text-sm font-medium text-gray-200 flex items-center gap-2">
             Instrument
@@ -162,7 +122,6 @@ export default function FilePreview({ file, onTranscribe, onClear }: FilePreview
         </div>
       </div>
 
-      {/* 버튼 영역 */}
       <div className="flex justify-between items-center">
         <button
           onClick={handlePlay}

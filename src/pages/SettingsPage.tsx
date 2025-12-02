@@ -1,13 +1,19 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faGear } from "@fortawesome/free-solid-svg-icons";
 import Button from "../components/common/Button";
 import Input from "../components/common/Input";
 import ModalPortal from "../components/common/ModalPortal";
+import { extractErrorMessage } from "../utils/error";
 import toast from "react-hot-toast";
+import { withDraw } from "../services/AuthService";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function SettingsPage() {
+    const navigate = useNavigate();
+    const { logoutUser } = useAuth();
     const [form, setForm] = useState({ username: "", notifications: true });
     const [showDeleteModal, setShowDeleteModal] = useState(false);
 
@@ -23,10 +29,29 @@ export default function SettingsPage() {
         toast.success("[+] Settings saved! (mock)");
     };
 
-    const handleDeleteAccount = () => {
-        toast.success("[-] Account deleted (mock)");
-        setShowDeleteModal(false);
-        // TODO: 실제 회원탈퇴 API 연동 및 로그아웃 처리
+    const handleDeleteAccount = async () => {
+        try {
+            toast.loading("계정 삭제 중...");
+
+            const res = await withDraw();
+
+            if (!res.ok) {
+                toast.dismiss();
+                toast.error(extractErrorMessage(res.error) || "회원탈퇴 실패");
+                return;
+            }
+
+            toast.dismiss();
+            toast.success("계정이 삭제되었습니다.");
+
+            logoutUser();
+            navigate("/");
+        } catch (err: any) {
+            toast.dismiss();
+            toast.error(err.message ?? "회원탈퇴 중 오류 발생");
+        } finally {
+            setShowDeleteModal(false);
+        }
     };
 
     return (
@@ -51,7 +76,7 @@ export default function SettingsPage() {
                 </p>
 
                 <div className="w-full max-w-md mx-auto space-y-6 text-left">
-                    <Input
+                    {/* <Input
                         label="Username"
                         name="username"
                         type="text"
@@ -81,7 +106,7 @@ export default function SettingsPage() {
                         Save Settings
                     </Button>
 
-                    <hr className="border-white/10 my-6" />
+                    <hr className="border-white/10 my-6" /> */}
 
                     <div className="text-center">
                         <p className="text-gray-400 mb-3 text-sm">
