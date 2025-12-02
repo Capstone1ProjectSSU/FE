@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -13,64 +13,38 @@ import {
   faTableList,
   faChevronDown,
 } from "@fortawesome/free-solid-svg-icons";
-import { motion, AnimatePresence } from "framer-motion";
 
 import Button from "../common/Button";
+import { motion, AnimatePresence } from "framer-motion";
 
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logoutUser } = useAuth();
-
-  const isAuthenticated = !!user;
-  const userEmail = user ?? "";
-
-
-  const [isOpen, setIsOpen] = useState<boolean>(false);
-  const [dropdownOpen, setDropdownOpen] = useState<boolean>(false);
-  const [scrolled, setScrolled] = useState<boolean>(false);
-  const [hidden, setHidden] = useState<boolean>(false);
-
-  const lastScrollYRef = useRef<number>(0);
-  const dropdownRef = useRef<HTMLDivElement | null>(null);
+  const { isAuthenticated, userEmail, logout } = useAuth();
+  const [isOpen, setIsOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [hidden, setHidden] = useState(false);
+  const [lastScrollY, setLastScrollY] = useState(0);
 
   const isDashboard = location.pathname.startsWith("/dashboard");
 
+  // Scroll listener
   useEffect(() => {
     const handleScroll = () => {
       const currentY = window.scrollY;
-      const lastY = lastScrollYRef.current;
-
       setScrolled(currentY > 80);
-      setHidden(currentY > lastY && currentY > 200);
-      lastScrollYRef.current = currentY;
+      setHidden(currentY > lastScrollY && currentY > 200);
+      setLastScrollY(currentY);
     };
-
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  useEffect(() => {
-    if (!dropdownOpen) return;
-
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node)
-      ) {
-        setDropdownOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [dropdownOpen]);
+  }, [lastScrollY]);
 
   const handleLogout = () => {
-    logoutUser();
+    logout();
     navigate("/");
     setIsOpen(false);
-    setDropdownOpen(false);
   };
 
   return (
@@ -82,26 +56,28 @@ const Navbar: React.FC = () => {
       }}
       transition={{ duration: 0.5, ease: "easeInOut" }}
       className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 ${isDashboard
-          ? "bg-[#090014]/95 backdrop-blur-xl border-b border-blue-500/20 shadow-md shadow-blue-600/10"
-          : scrolled
-            ? "bg-black/60 backdrop-blur-lg border-b border-blue-500/20 shadow-md shadow-blue-600/10"
-            : "bg-transparent border-b border-transparent"
+        ? "bg-[#090014]/95 backdrop-blur-xl border-b border-blue-500/20 shadow-md shadow-blue-600/10"
+        : scrolled
+          ? "bg-black/60 backdrop-blur-lg border-b border-blue-500/20 shadow-md shadow-blue-600/10"
+          : "bg-transparent border-b border-transparent"
         }`}
     >
+      {/* Sidebar 연결 블록 (대시보드 전용) */}
       {isDashboard && (
         <div className="absolute left-0 top-0 h-full w-64 bg-white/5 backdrop-blur-lg border-r border-white/10" />
       )}
 
       <div className="max-w-7xl mx-auto flex justify-between items-center px-6 py-4 text-gray-300 relative z-10">
-        <button
-          type="button"
+        {/* Logo */}
+        <div
           onClick={() => navigate("/")}
           className="flex items-center space-x-2 text-2xl font-bold text-transparent bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text cursor-pointer hover:opacity-80 transition"
         >
           <FontAwesomeIcon icon={faGuitar} />
           <span>AI Guitar TAB</span>
-        </button>
+        </div>
 
+        {/* ✅ Desktop Menu */}
         <div className="hidden md:flex items-center space-x-8">
           {!isAuthenticated ? (
             <>
@@ -124,8 +100,8 @@ const Navbar: React.FC = () => {
             </>
           ) : (
             <>
+              {/* ✅ Dashboard 이동 버튼 (프로필 왼쪽) */}
               <button
-                type="button"
                 onClick={() => navigate("/dashboard")}
                 className="text-sm text-gray-300 hover:text-blue-400 transition flex items-center space-x-2"
               >
@@ -133,10 +109,10 @@ const Navbar: React.FC = () => {
                 <span>Dashboard</span>
               </button>
 
-              <div className="relative" ref={dropdownRef}>
+              {/* ✅ 프로필 드롭다운 */}
+              <div className="relative">
                 <button
-                  type="button"
-                  onClick={() => setDropdownOpen((prev) => !prev)}
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
                   className="flex items-center space-x-2 text-sm hover:text-blue-400 transition"
                 >
                   <FontAwesomeIcon icon={faUser} className="text-blue-400" />
@@ -153,7 +129,6 @@ const Navbar: React.FC = () => {
                 {dropdownOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white/10 backdrop-blur-lg border border-white/10 rounded-lg shadow-lg z-50 text-gray-200">
                     <button
-                      type="button"
                       onClick={() => {
                         navigate("/settings");
                         setDropdownOpen(false);
@@ -163,7 +138,6 @@ const Navbar: React.FC = () => {
                       <FontAwesomeIcon icon={faGear} className="mr-2" /> Settings
                     </button>
                     <button
-                      type="button"
                       onClick={handleLogout}
                       className="block w-full text-left px-4 py-2 text-red-400 hover:bg-red-500/20 transition"
                     >
@@ -176,15 +150,16 @@ const Navbar: React.FC = () => {
           )}
         </div>
 
+        {/* ✅ 모바일 메뉴 토글 */}
         <button
-          type="button"
-          onClick={() => setIsOpen((prev) => !prev)}
+          onClick={() => setIsOpen(!isOpen)}
           className="md:hidden text-gray-300 hover:text-blue-400 transition"
         >
           <FontAwesomeIcon icon={isOpen ? faTimes : faBars} size="lg" />
         </button>
       </div>
 
+      {/* ✅ Mobile Menu */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -197,10 +172,7 @@ const Navbar: React.FC = () => {
             {!isAuthenticated ? (
               <>
                 <Button
-                  onClick={() => {
-                    navigate("/login");
-                    setIsOpen(false);
-                  }}
+                  onClick={() => navigate("/login")}
                   variant="ghost"
                   className="px-2 py-1"
                 >
@@ -208,10 +180,7 @@ const Navbar: React.FC = () => {
                   Login
                 </Button>
                 <Button
-                  onClick={() => {
-                    navigate("/signup");
-                    setIsOpen(false);
-                  }}
+                  onClick={() => navigate("/signup")}
                   variant="primary"
                   className="flex items-center px-2 py-1"
                 >
@@ -221,6 +190,7 @@ const Navbar: React.FC = () => {
               </>
             ) : (
               <>
+                {/* 모바일에서도 Dashboard 표시 */}
                 <Button
                   onClick={() => {
                     navigate("/dashboard");

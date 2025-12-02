@@ -3,67 +3,24 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import Button from "../components/common/Button";
 import Input from "../components/common/Input";
-import { useAuth } from "../contexts/AuthContext";
 
 const SignupPage: React.FC = () => {
   const navigate = useNavigate();
-  const { signupUser } = useAuth();
-
-  const [form, setForm] = useState({
-    username: "",
-    password: "",
-    email: "",
-  });
+  const [form, setForm] = useState({ name: "", email: "", password: "" });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const isValidEmail = (email: string) =>
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
-    const { username, password, email } = form;
-
-    if (username.length < 3) {
-      alert("Username must be at least 3 characters.");
-      return;
-    }
-
-    if (!isValidEmail(email)) {
-      alert("Please enter a valid email address.");
-      return;
-    }
-
-    if (password.length < 6) {
-      alert("Password must be at least 6 characters.");
-      return;
-    }
-
-    try {
-      await signupUser(username, password, email);
-      navigate("/login");
-    } catch (err: any) {
-      let message = "Signup failed.";
-
-      if (typeof err === "string") {
-        message = err;
-      } else if (err?.message) {
-        message = err.message;
-      } else if (err?.error?.message) {
-        message = err.error.message;
-      } else if (err?.error?.detail) {
-        message = err.error.detail;
-      }
-
-      alert(message);
-    }
+    console.log("Signup form:", form);
+    navigate("/login");
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-black via-[#0b0220] to-[#120030] relative overflow-hidden">
+      {/* glowing blurs */}
       <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[45rem] h-[45rem] bg-purple-600/20 rounded-full blur-[200px]" />
       <div className="absolute bottom-0 right-0 w-[35rem] h-[35rem] bg-blue-500/20 rounded-full blur-[160px]" />
 
@@ -79,14 +36,13 @@ const SignupPage: React.FC = () => {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <Input
-            label="Username"
-            name="username"
+            label="Name"
+            name="name"
             type="text"
-            value={form.username}
+            value={form.name}
             onChange={handleChange}
-            placeholder="Enter your username"
+            placeholder="Enter your name"
           />
-
           <Input
             label="Email"
             name="email"
@@ -95,16 +51,14 @@ const SignupPage: React.FC = () => {
             onChange={handleChange}
             placeholder="Enter your email"
           />
-
           <Input
             label="Password"
             name="password"
             type="password"
             value={form.password}
             onChange={handleChange}
-            placeholder="Enter your password"
+            placeholder="Enter password"
           />
-
           <Button type="submit" variant="primary" className="w-full mt-6 py-4">
             Sign Up
           </Button>
@@ -115,7 +69,7 @@ const SignupPage: React.FC = () => {
           <span
             onClick={() => navigate("/login")}
             className="text-blue-400 hover:underline cursor-pointer"
-          >
+          > 
             Login
           </span>
         </p>

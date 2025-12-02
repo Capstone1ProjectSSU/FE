@@ -11,8 +11,6 @@ import {
 import { motion } from "framer-motion";
 import Button from "../components/common/Button";
 import Footer from "../components/common/Footer";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
 
 const features = [
   { title: "Fast Transcription", desc: "AI converts your audio to TABs instantly.", icon: faBolt },
@@ -24,26 +22,15 @@ const features = [
 ];
 
 const MainPage: React.FC = () => {
-  const navigate = useNavigate();
-  const { user } = useAuth();
-
-  const handleUploadClick = () => {
-    if (user) navigate("/dashboard");
-    else navigate("/login");
-  };
-
-  const handleLearnMore = () => {
-    const el = document.getElementById("features");
-    if (el) el.scrollIntoView({ behavior: "smooth" });
-  };
-
   return (
     <div className="flex flex-col bg-gradient-to-b from-black via-[#0b0220] to-[#120030] text-white relative overflow-hidden">
+      {/* Background Glow Effects */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -left-40 w-[60rem] h-[60rem] bg-blue-500/20 rounded-full blur-[200px]" />
         <div className="absolute bottom-0 right-0 w-[50rem] h-[50rem] bg-purple-600/20 rounded-full blur-[180px]" />
       </div>
 
+      {/* Hero Section */}
       <section className="relative z-10 flex flex-col justify-center items-center h-screen text-center px-4">
         <motion.h1
           initial={{ opacity: 0, y: -50 }}
@@ -67,19 +54,16 @@ const MainPage: React.FC = () => {
           transition={{ duration: 0.6, delay: 0.6 }}
           className="mt-10 flex flex-col sm:flex-row gap-4"
         >
-          <Button className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-full text-lg font-semibold transition-all shadow-lg hover:shadow-blue-600/40"
-            onClick={handleUploadClick}
-          >
+          <Button className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-full text-lg font-semibold transition-all shadow-lg hover:shadow-blue-600/40">
             Upload Audio
           </Button>
-          <Button className="px-4 py-2 bg-transparent border border-white-500 hover:border-blue-400 text-gray-300 hover:text-white rounded-full text-lg font-semibold transition-all"
-            onClick={handleLearnMore}
-          >
+          <Button className="px-4 py-2 bg-transparent border border-white-500 hover:border-blue-400 text-gray-300 hover:text-white rounded-full text-lg font-semibold transition-all">
             Learn More
           </Button>
         </motion.div>
       </section>
 
+      {/* Features Section */}
       <section id="features" className="relative z-10 py-32 px-6">
         <motion.h2
           initial={{ opacity: 0, y: -30 }}
@@ -112,6 +96,7 @@ const MainPage: React.FC = () => {
         </div>
       </section>
 
+      {/* How It Works */}
       <section id="how-it-works" className="relative z-10 py-32 text-center">
         <motion.h2
           initial={{ opacity: 0, y: 40 }}

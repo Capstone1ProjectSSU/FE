@@ -1,98 +1,39 @@
-import { createContext, useContext, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { login, signup, logout as logoutApi, authMe } from "../services/AuthService";
-import { extractErrorMessage } from "../utils/error";
+import React, { createContext, useContext, useState } from "react";
+import type { ReactNode } from "react";
 
 interface AuthContextType {
-  user: string;
-  loading: boolean;
-
-  loginUser: (username: string, password: string) => Promise<void>;
-  signupUser: (username: string, password: string, email: string) => Promise<void>;
-  logoutUser: () => Promise<void>;
-  refreshUser: () => Promise<void>;
+  isAuthenticated: boolean;
+  login: (email: string) => void;
+  logout: () => void;
+  userEmail: string | null;
 }
 
-const AuthContext = createContext<AuthContextType | null>(null);
-export const useAuth = () => useContext(AuthContext)!;
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export default function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<string>("");
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
 
-  useEffect(() => {
-    const token = localStorage.getItem("accessToken");
-    if (!token) {
-      setLoading(false);
-      return;
-    }
-
-    refreshUser().finally(() => setLoading(false));
-  }, []);
-
-  const loginUser = async (username: string, password: string) => {
-    const result = await login(username, password);
-
-    if (!result.ok) {
-      throw new Error(extractErrorMessage(result.error));
-    }
-
-    const data = result.data;
-    localStorage.setItem("accessToken", data.accessToken);
-
-    setUser(data.username);
-    navigate("/dashboard");
+  const login = (email: string) => {
+    setIsAuthenticated(true);
+    setUserEmail(email);
+    // 나중에 JWT 저장 등 추가 가능
   };
 
-  const signupUser = async (username: string, password: string, email: string) => {
-    const result = await signup(username, password, email);
-
-    if (!result.ok) {
-      throw new Error(extractErrorMessage(result.error));
-    }
-  };
-
-  const logoutUser = async () => {
-    const token = localStorage.getItem("accessToken");
-
-    if (token) {
-      await logoutApi();
-    }
-
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("transcription_jobs");
-    setUser("");
-    navigate("/");
-  };
-
-  const refreshUser = async () => {
-    const result = await authMe();
-
-    if (!result.ok) {
-      localStorage.removeItem("accessToken");
-      setUser("");
-      return;
-    }
-
-    const msg = result.data.message;
-    const username = msg.split(":")[1]?.trim();
-
-    setUser(username);
+  const logout = () => {
+    setIsAuthenticated(false);
+    setUserEmail(null);
   };
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        loading,
-        loginUser,
-        signupUser,
-        logoutUser,
-        refreshUser,
-      }}
-    >
+    <AuthContext.Provider value={{ isAuthenticated, login, logout, userEmail }}>
       {children}
     </AuthContext.Provider>
   );
-}
+};
+
+export const useAuth = () => {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
+  return ctx;
+};

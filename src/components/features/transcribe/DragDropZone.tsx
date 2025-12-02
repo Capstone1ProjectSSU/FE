@@ -16,21 +16,21 @@ export default function DragDropZone({ onFileSelect }: DragDropZoneProps) {
     setDragOver(false);
 
     const file = e.dataTransfer.files[0];
-    if (file && file.type.startsWith("audio/")) {
+    if (file && file.type === "audio/mpeg") {
       setFileName(file.name);
       onFileSelect?.(file);
     } else {
-      alert("오디오 파일만 업로드할 수 있습니다.");
+      alert("MP3 파일만 업로드할 수 있습니다.");
     }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file && file.type.startsWith("audio/")) {
+    if (file && file.type === "audio/mpeg") {
       setFileName(file.name);
       onFileSelect?.(file);
     } else {
-      alert("오디오 파일만 업로드할 수 있습니다.");
+      alert("MP3 파일만 업로드할 수 있습니다.");
     }
   };
 
@@ -46,17 +46,19 @@ export default function DragDropZone({ onFileSelect }: DragDropZoneProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
       className={`relative border-2 border-dashed rounded-2xl p-10 text-center transition-all duration-300 
-        ${dragOver
-          ? "border-blue-500 bg-blue-500/10 shadow-[0_0_25px_rgba(59,130,246,0.5)] scale-[1.02]"
-          : "border-white/10 bg-white/5 hover:border-blue-400 hover:shadow-[0_0_15px_rgba(59,130,246,0.3)]"
+        ${
+          dragOver
+            ? "border-blue-500 bg-blue-500/10 shadow-[0_0_25px_rgba(59,130,246,0.5)] scale-[1.02]"
+            : "border-white/10 bg-white/5 hover:border-blue-400 hover:shadow-[0_0_15px_rgba(59,130,246,0.3)]"
         }`}
     >
       <div className="flex flex-col items-center space-y-4 text-gray-200">
         <FontAwesomeIcon
           icon={dragOver ? faCloudArrowUp : faMusic}
-          className={`text-4xl ${dragOver ? "text-blue-400 animate-pulse" : "text-blue-300"}`}
+          className={`text-4xl ${
+            dragOver ? "text-blue-400 animate-pulse" : "text-blue-300"
+          }`}
         />
-
         <p className="text-base font-medium">
           {fileName ? (
             <>
@@ -64,14 +66,14 @@ export default function DragDropZone({ onFileSelect }: DragDropZoneProps) {
               <span className="text-blue-400 font-semibold">{fileName}</span>
             </>
           ) : (
-            "오디오 파일을 여기에 드래그하세요"
+            "MP3 파일을 여기에 드래그하세요"
           )}
         </p>
-
         <p className="text-sm text-gray-400">
           또는 아래 버튼으로 파일을 선택하세요.
         </p>
 
+        {/* ✅ Upload Button (Button.tsx와 동일 스타일) */}
         <label className="relative inline-block cursor-pointer mt-3">
           <span
             className={`flex items-center justify-center gap-2 px-5 py-2 rounded-lg font-medium text-sm 
@@ -85,13 +87,14 @@ export default function DragDropZone({ onFileSelect }: DragDropZoneProps) {
           </span>
           <input
             type="file"
-            accept="audio/*"
+            accept=".mp3"
             className="hidden"
             onChange={handleChange}
           />
         </label>
       </div>
 
+      {/* Glow ring animation */}
       {dragOver && (
         <motion.div
           initial={{ opacity: 0 }}

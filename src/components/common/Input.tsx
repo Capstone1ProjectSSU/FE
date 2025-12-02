@@ -49,12 +49,14 @@ const Input: React.FC<InputProps> = ({
           whileHover={{ scale: 1.01 }}
           transition={{ type: "spring", stiffness: 250, damping: 18 }}
           className={`w-full text-white bg-white/10 backdrop-blur-md border rounded-xl px-4 py-3 pr-11 outline-none transition-all duration-300 placeholder-gray-500
-            ${focused
-              ? "border-blue-500/60 shadow-[0_0_10px_rgba(59,130,246,0.3)]"
-              : "border-white/10"
+            ${
+              focused
+                ? "border-blue-500/60 shadow-[0_0_10px_rgba(59,130,246,0.3)]"
+                : "border-white/10"
             }`}
         />
 
+        {/* Password visibility toggle */}
         {isPasswordField && (
           <button
             type="button"

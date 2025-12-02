@@ -7,31 +7,26 @@ import { useAuth } from "../contexts/AuthContext";
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
-  const { loginUser } = useAuth();
-  const [form, setForm] = useState({ username: "", password: "" });
+  const { login } = useAuth();
+  const [form, setForm] = useState({ email: "", password: "" });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!form.username || !form.password) {
-      alert("Please enter username and password");
-      return;
-    }
-
-    try {
-      await loginUser(form.username, form.password);
+    if (form.email && form.password) {
+      login(form.email);
       navigate("/dashboard");
-    } catch (err: any) {
-      alert("Login failed: " + err.message);
+    } else {
+      alert("Please enter email and password");
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-black via-[#0b0220] to-[#120030] relative overflow-hidden">
+      {/* glowing blurs */}
       <div className="absolute -top-40 -left-40 w-[40rem] h-[40rem] bg-blue-500/20 rounded-full blur-[180px]" />
       <div className="absolute bottom-0 right-0 w-[35rem] h-[35rem] bg-purple-600/20 rounded-full blur-[160px]" />
 
@@ -47,14 +42,13 @@ const LoginPage: React.FC = () => {
 
         <form onSubmit={handleLogin} className="space-y-6">
           <Input
-            label="Username"
-            name="username"
-            type="text"
-            value={form.username}
+            label="Email"
+            name="email"
+            type="email"
+            value={form.email}
             onChange={handleChange}
-            placeholder="Enter your username"
+            placeholder="Enter your email"
           />
-
           <Input
             label="Password"
             name="password"
@@ -63,7 +57,6 @@ const LoginPage: React.FC = () => {
             onChange={handleChange}
             placeholder="Enter your password"
           />
-
           <Button type="submit" variant="primary" className="w-full mt-6 py-3">
             Login
           </Button>
