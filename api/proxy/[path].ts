@@ -1,5 +1,5 @@
 export default async function handler(req: any, res: any) {
-  const backend = process.env.VITE_API_BASE_URL;
+  const backend = process.env.BACKEND_URL;
 
   if (!backend) {
     return res.status(500).json({
