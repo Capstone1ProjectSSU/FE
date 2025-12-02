@@ -17,7 +17,7 @@ type TimelineItem =
   | { type: "chord"; start: number; duration: number; name: string }
   | { type: "rest"; start: number; duration: number };
 
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
 export default function ChordSheetFromURL({ url }: { url: string }) {
   const [bars, setBars] = useState<TimelineItem[][]>([]);
