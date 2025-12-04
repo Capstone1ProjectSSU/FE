@@ -13,7 +13,7 @@ function authHeader(): Record<string, string> | undefined {
 
 // GET /api/post   (게시글 전체 목록 조회)
 export function getPostList(): Promise<ApiResult<PostListData>> {
-  return handleWrappedApi<PostListData>("/post", {
+  return handleWrappedApi<PostListData>("/api/post", {
     method: "GET",
     headers: { ...authHeader() },
   });
@@ -23,7 +23,7 @@ export function getPostList(): Promise<ApiResult<PostListData>> {
 export function getPostDetail(
   postId: number
 ): Promise<ApiResult<PostDetailData>> {
-  return handleWrappedApi<PostDetailData>(`/post/${postId}`, {
+  return handleWrappedApi<PostDetailData>(`/api/post/${postId}`, {
     method: "GET",
     headers: { ...authHeader() },
   });
@@ -33,7 +33,7 @@ export function getPostDetail(
 export function shareSheet(
   postId: number
 ): Promise<ApiResult<PostShareResponse>> {
-  return handleWrappedApi<PostShareResponse>(`/post/${postId}`, {
+  return handleWrappedApi<PostShareResponse>(`/api/post/${postId}`, {
     method: "POST",
     headers: { ...authHeader() },
   });
@@ -43,7 +43,7 @@ export function shareSheet(
 export function unshareSheet(
   postId: number
 ): Promise<ApiResult<PostShareResponse>> {
-  return handleWrappedApi<PostShareResponse>(`/post/${postId}`, {
+  return handleWrappedApi<PostShareResponse>(`/api/post/${postId}`, {
     method: "PATCH",
     headers: { ...authHeader() },
   });

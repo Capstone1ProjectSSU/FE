@@ -13,7 +13,7 @@ export function createComment(
   contents: string,
   rating: number
 ): Promise<ApiResult<CommentItem>> {
-  return handleWrappedApi<CommentItem>(`/comment/${postId}`, {
+  return handleWrappedApi<CommentItem>(`/api/comment/${postId}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -29,7 +29,7 @@ export function updateComment(
   contents: string,
   rating: number
 ): Promise<ApiResult<CommentItem>> {
-  return handleWrappedApi<CommentItem>(`/comment/${commentId}`, {
+  return handleWrappedApi<CommentItem>(`/api/comment/${commentId}`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
@@ -43,7 +43,7 @@ export function updateComment(
 export function deleteComment(
   commentId: number
 ): Promise<ApiResult<null>> {
-  return handleWrappedApi<null>(`/comment/${commentId}`, {
+  return handleWrappedApi<null>(`/api/comment/${commentId}`, {
     method: "DELETE",
     headers: { ...authHeader() },
   });

@@ -13,7 +13,7 @@ export function signup(
   password: string,
   email: string
 ): Promise<ApiResult<SignupResponse>> {
-  return handleRawApi<SignupResponse>("/auth/signup", {
+  return handleRawApi<SignupResponse>("/api/auth/signup", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username, password, email }),
@@ -25,7 +25,7 @@ export function login(
   username: string,
   password: string
 ): Promise<ApiResult<LoginSuccessResponse>> {
-  return handleRawApi<LoginSuccessResponse>("/auth/login", {
+  return handleRawApi<LoginSuccessResponse>("/api/auth/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username, password }),
@@ -34,7 +34,7 @@ export function login(
 
 /** LOGOUT */
 export function logout(): Promise<ApiResult<{ message: string }>> {
-  return handleRawApi<{ message: string }>("/auth/logout", {
+  return handleRawApi<{ message: string }>("/api/auth/logout", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
   });
@@ -43,7 +43,7 @@ export function logout(): Promise<ApiResult<{ message: string }>> {
 /** AUTH ME */
 export function authMe(): Promise<ApiResult<AuthMeResponse>> {
   const token = localStorage.getItem("accessToken");
-  return handleRawApi<AuthMeResponse>("/auth/me", {
+  return handleRawApi<AuthMeResponse>("/api/auth/me", {
     method: "GET",
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
@@ -52,7 +52,7 @@ export function authMe(): Promise<ApiResult<AuthMeResponse>> {
 /** WITH DRAW **/
 export function withDraw(): Promise<ApiResult<WithDrawResponse>> {
   const token = localStorage.getItem("accessToken");
-  return handleRawApi<WithDrawResponse>("/auth/withdraw", {
+  return handleRawApi<WithDrawResponse>("/api/auth/withdraw", {
     method: "DELETE",
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });

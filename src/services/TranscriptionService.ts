@@ -24,7 +24,7 @@ export function uploadAudio(
   form.append("songTitle", songTitle);
   form.append("artistName", artistName);
 
-  return handleWrappedApi<AudioUploadResponse>("/audio/upload", {
+  return handleWrappedApi<AudioUploadResponse>("/api/audio/upload", {
     method: "POST",
     body: form,
     headers: {
@@ -36,7 +36,7 @@ export function uploadAudio(
 export function requestTranscription(
   payload: TranscriptionRequestPayload
 ): Promise<ApiResult<TranscriptionRequestResponse>> {
-  return handleWrappedApi<TranscriptionRequestResponse>("/transcription/request", {
+  return handleWrappedApi<TranscriptionRequestResponse>("/api/transcription/request", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -63,7 +63,7 @@ export function getTranscriptionStatus(
 export function requestDifficultyHarder(
   payload: DifficultyRequestPayload
 ): Promise<ApiResult<DifficultyResponse>> {
-  return handleWrappedApi<DifficultyResponse>("/difficulty/harder", {
+  return handleWrappedApi<DifficultyResponse>("/api/difficulty/harder", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -76,7 +76,7 @@ export function requestDifficultyHarder(
 export function requestDifficultyEasier(
   payload: DifficultyRequestPayload
 ): Promise<ApiResult<DifficultyResponse>> {
-  return handleWrappedApi<DifficultyResponse>("/difficulty/easier", {
+  return handleWrappedApi<DifficultyResponse>("/api/difficulty/easier", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
